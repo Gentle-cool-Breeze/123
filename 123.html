@@ -2,13 +2,13 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>河图洛书五行分析系统</title>
+    <title>河图洛书生命数字计算系统</title>
     <style>
         body { 
-            font-family: Arial, sans-serif; 
             max-width: 800px; 
             margin: 20px auto; 
-            padding: 20px;
+            padding: 20px; 
+            font-family: Arial, sans-serif;
             background-color: #f5f5f5;
         }
         .container {
@@ -17,14 +17,10 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .input-group {
-            margin: 15px 0;
-        }
         input {
             padding: 8px;
-            margin: 0 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            margin: 5px;
+            width: 120px;
         }
         button {
             background: #4CAF50;
@@ -37,124 +33,142 @@
         .result {
             margin-top: 20px;
             padding: 15px;
-            background: #f8f9fa;
+            background: #e8f5e9;
             border-radius: 5px;
         }
-        .crystal-list {
-            color: #666;
+        .crystal {
+            color: #2c3e50;
             margin: 10px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>河图洛书五行分析系统</h2>
+        <h2>河图洛书生命数字计算</h2>
         
-        <div class="input-group">
-            <input type="text" id="year" placeholder="年份" maxlength="4">
-            <input type="text" id="month" placeholder="月份" maxlength="2">
-            <input type="text" id="day" placeholder="日期" maxlength="2">
-            <button onclick="calculate()">开始分析</button>
+        <div>
+            <input type="text" id="year" placeholder="年份（如2023）">
+            <input type="text" id="month" placeholder="月份">
+            <input type="text" id="day" placeholder="日期">
+            <button onclick="calculate()">开始测算</button>
         </div>
 
-        <div id="result" class="result"></div>
+        <div id="output" class="result"></div>
     </div>
 
-<script>
-const wuXingMap = ["水","金","金","火","木","木","水","土","土","土"];
-const wuXingOrder = ["金","木","水","火","土"];
-const crystalRecommendations = {
-    "金": ["白水晶（净化负能量）", "钛晶（增强决断力）", "金发晶（招财纳福）"],
-    "木": ["绿幽灵（提升事业运）", "孔雀石（促进健康）", "东陵玉（增强创造力）"],
-    "水": ["黑曜石（驱邪避凶）", "海蓝宝（镇定情绪）", "天河石（增进沟通）"],
-    "火": ["红玛瑙（增强活力）", "紫水晶（提升智慧）", "红纹石（增进爱情）"],
-    "土": ["黄水晶（招财聚气）", "虎眼石（坚定信念）", "茶晶（稳定能量）"]
-};
+    <script>
+        // 核心计算逻辑
+        function calculateJiuGongGe(year, month, day) {
+            // 补零处理
+            month = month.padStart(2, '0');
+            day = day.padStart(2, '0');
+            
+            const s = year + month + day;
+            const po = new Array(10).fill(0);
+            
+            // 魄容器统计
+            [...s].forEach(c => po[parseInt(c)]++);
 
-function digitSum(s) {
-    return s.split('').reduce((sum, c) => sum + parseInt(c), 0);
-}
+            // 魂容器构建
+            let hun = [];
+            po.forEach((count, digit) => {
+                if (count >= 3) hun.push(digit);
+            });
 
-function calculateJiuGongGe(year, month, day) {
-    const s = year + month + day;
-    const po = new Array(10).fill(0);
-    
-    // 魄容器统计
-    s.split('').forEach(c => po[parseInt(c)]++);
+            // 主魂计算
+            const sum = [...s].reduce((acc, c) => acc + parseInt(c), 0);
+            let mainHun = sum;
 
-    // 魂容器构建
-    let hun = [];
-    for (let i = 0; i < 10; i++) {
-        if (po[i] >= 3) hun.push(i);
-    }
+            if (sum > 10) {
+                while (mainHun >= 10) {
+                    const digits = String(mainHun).split('').map(Number);
+                    hun.push(...digits);
+                    mainHun = digits.reduce((a, b) => a + b, 0);
+                }
+            } else {
+                const ySum = [...year].reduce((a, c) => a + parseInt(c), 0);
+                const mSum = [...month].reduce((a, c) => a + parseInt(c), 0);
+                const dSum = [...day].reduce((a, c) => a + parseInt(c), 0);
+                hun.push(ySum, mSum, dSum);
+                mainHun = ySum + mSum + dSum;
+                
+                if (mainHun === 10) {
+                    hun.push(1, 0);
+                    mainHun = 1;
+                }
+            }
 
-    // 主魂计算
-    let sum = digitSum(s);
-    let main_hun = sum;
+            // 生成基础结果
+            let result = hun.join('') + mainHun;
 
-    if (sum > 10) {
-        while (main_hun >= 10) {
-            const digits = String(main_hun).split('').map(Number);
-            hun.push(...digits);
-            main_hun = digits.reduce((a, b) => a + b, 0);
+            // 处理重复数字
+            const hunCounts = hun.reduce((acc, d) => {
+                acc[d] = (acc[d] || 0) + 1;
+                return acc;
+            }, {});
+            const repeated = Object.entries(hunCounts)
+                .filter(([_, count]) => count >= 3)
+                .map(([d]) => parseInt(d))
+                .sort((a, b) => a - b);
+                
+            result += repeated.join('');
+
+            // 检测缺失项
+            const missing = [];
+            for (let d = 0; d <= 9; d++) {
+                if (po[d] === 0 && 
+                    !hun.includes(d) && 
+                    d !== mainHun &&
+                    !repeated.includes(d)) {
+                    missing.push(d);
+                }
+            }
+
+            return result + "/" + missing.join('');
         }
-    } else {
-        const y_sum = digitSum(year);
-        const m_sum = digitSum(month);
-        const d_sum = digitSum(day);
-        hun.push(y_sum, m_sum, d_sum);
-        main_hun = y_sum + m_sum + d_sum;
-        if (main_hun === 10) {
-            hun.push(1, 0);
-            main_hun = 1;
+
+        // 界面交互逻辑
+        function calculate() {
+            const wuXingMap = ["水","金","金","火","木","木","水","土","土","土"];
+            const crystalRecommendations = {
+                "金": ["白水晶（净化负能量）", "钛晶（增强决断力）", "金发晶（招财纳福）"],
+                "木": ["绿幽灵（提升事业运）", "孔雀石（促进健康）", "东陵玉（增强创造力）"],
+                "水": ["黑曜石（驱邪避凶）", "海蓝宝（镇定情绪）", "天河石（增进沟通）"],
+                "火": ["红玛瑙（增强活力）", "紫水晶（提升智慧）", "红纹石（增进爱情）"],
+                "土": ["黄水晶（招财聚气）", "虎眼石（坚定信念）", "茶晶（稳定能量）"]
+            };
+
+            const year = document.getElementById('year').value;
+            const month = document.getElementById('month').value;
+            const day = document.getElementById('day').value;
+
+            const result = calculateJiuGongGe(year, month, month);
+            const [numbers, missingDigits] = result.split('/');
+
+            // 解析五行缺失
+            const missingSet = new Set([...missingDigits].map(d => wuXingMap[parseInt(d)]));
+            const output = ["金","木","水","火","土"].filter(wx => missingSet.has(wx));
+
+            // 构建显示结果
+            let html = `<h3>测算结果：</h3>
+                <p>生命数字：<strong>${numbers}/${missingDigits}</strong></p>`;
+
+            if (output.length > 0) {
+                html += `<p>缺失五行：<strong>${output.join('、')}</strong></p>
+                    <div class="crystal">
+                        <h4>推荐佩戴水晶：</h4>`;
+                
+                output.forEach(wx => {
+                    html += `<p>◇ ${wx}属性：${crystalRecommendations[wx].join('  ')}</p>`;
+                });
+                
+                html += `<p><em>佩戴建议：选择3-5种水晶组合佩戴，金属材质底座可增强金属性效果</em></p></div>`;
+            } else {
+                html += `<p>恭喜！您的五行属性完整无缺</p>`;
+            }
+
+            document.getElementById('output').innerHTML = html;
         }
-    }
-
-    // 检测缺失项
-    const missing = [];
-    for (let d = 0; d <= 9; d++) {
-        if (po[d] === 0 && 
-            !hun.includes(d) && 
-            d !== main_hun) {
-            missing.push(d);
-        }
-    }
-
-    return {
-        hun: hun.join('') + main_hun,
-        missing: missing.join('')
-    };
-}
-
-function calculate() {
-    const year = document.getElementById('year').value;
-    const month = document.getElementById('month').value;
-    const day = document.getElementById('day').value;
-
-    const result = calculateJiuGongGe(year, month, day);
-    const missingElements = new Set(
-        result.missing.split('').map(d => wuXingMap[parseInt(d)])
-    );
-
-    // 构建输出结果
-    let output = `<h3>九宫格生命数字：${result.hun}/${result.missing}</h3>`;
-    
-    if (missingElements.size > 0) {
-        const sortedMissing = wuXingOrder.filter(wx => missingElements.has(wx));
-        output += `<p>缺失五行：${sortedMissing.join('、')}</p>`;
-        output += `<div class="crystal-list"><strong>推荐水晶：</strong>`;
-        sortedMissing.forEach(wx => {
-            output += `<div>◇ ${wx}属性：${
-                crystalRecommendations[wx].join(' ')
-            }</div>`;
-        });
-        output += `<p>佩戴建议：选择3-5种水晶组合佩戴，金属材质底座可增强金属性效果。</p></div>`;
-    } else {
-        output += `<p>恭喜！您的五行属性完整无缺</p>`;
-    }
-
-    document.getElementById('result').innerHTML = output;
-}
-</script>
+    </script>
 </body>
 </html>
